@@ -13,7 +13,8 @@ async function main() {
 
     const db = client.db(dbNAme)
     const collection = db.collection('tasks')
-
+    const deleted = await collection.deleteMany({ completed: true })
+    console.log(deleted)
     return 'done.';
 }
 
