@@ -65,7 +65,8 @@ router.get('/tasks/:id', async (req, res) => {
 })
 
 router.patch('/tasks/:id', async (req, res) => {
-    // const update = Object.keys(req.body)
+    const update = Object.keys(req.body)
+
     // const updatelist = ['description', 'Completed']
 
     // const flag = update.forEach((prop) => {
@@ -76,11 +77,17 @@ router.patch('/tasks/:id', async (req, res) => {
 
     const _id = req.params.id
     try {
-        const task = await task_model.task.findByIdAndUpdate(_id, req.body, { new: true, runValidators: true })
-        if (!task) {
+        const update_task = await task_model.task.findById(_id)
+        update.forEach((prop) => {
+            update_task[prop] = req.body[prop]
+        })
+        await update_task.save()
+
+        //const update_task = await task_model.task.findByIdAndUpdate(_id, req.body, { new: true, runValidators: true })
+        if (!update_task) {
             return res.status(404).send('task not found!')
         }
-        res.send(task)
+        res.send(update_task)
     } catch (e) {
         res.status(400).send(e)
     }
