@@ -16,6 +16,7 @@ const userSchema = new mongoose.Schema({
     },
     email: {
         type: String,
+        unique: true,
         required: true,
         trim: true,
         lowercase: true,
@@ -40,6 +41,21 @@ const userSchema = new mongoose.Schema({
         trim: true
     }
 })
+
+userSchema.statics.findByCredentials = async (email, password) => {
+    const user = await User.findOne({ email })
+
+    if (!user) {
+        console.log('Im here!')
+        throw new Error('User does not exist!')
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password)
+    if (!isMatch) {
+        throw new Error("Unable to login!")
+    }
+    return user
+}
 
 //no arrow functions cause this binding!!
 //next gets called to let it know we are done with all the tasks to be done before saving the user

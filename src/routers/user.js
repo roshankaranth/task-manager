@@ -5,6 +5,17 @@ require('../db/mongoose')
 
 const router = new express.Router()
 
+router.post('/users/login', async (req, res, next) => {
+    try {
+        const user = await User_model.User.findByCredentials(req.body.email, req.body.password)
+        res.send(user)
+
+    } catch (e) {
+        next(e)
+        // res.status(400).send(e)
+    }
+})
+
 router.post('/users', async (req, res) => {
     const user = new User_model.User(req.body)
     try {
@@ -28,6 +39,7 @@ router.get('/users', async (req, res) => {
         const users = await User_model.User.find({})
         res.send(users)
     } catch (e) {
+
         res.status(500).send(e)
     }
 
