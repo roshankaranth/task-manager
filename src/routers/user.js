@@ -8,7 +8,8 @@ const router = new express.Router()
 router.post('/users/login', async (req, res, next) => {
     try {
         const user = await User_model.User.findByCredentials(req.body.email, req.body.password)
-        res.send(user)
+        const token = await user.GenerateAuthToken()
+        res.send({ user, token })
 
     } catch (e) {
         next(e)
@@ -20,7 +21,8 @@ router.post('/users', async (req, res) => {
     const user = new User_model.User(req.body)
     try {
         await user.save()
-        res.status(201).send(user)
+        const token = await user.GenerateAuthToken()
+        res.status(201).send({ token, user })
     } catch (e) {
         res.status(400).send(e)
     }
