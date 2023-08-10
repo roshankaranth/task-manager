@@ -37,6 +37,29 @@ router.post('/users', async (req, res) => {
     // })
 })
 
+router.post('/users/logout', auth.auth, async (req, res) => {
+    //if we logout from one device we shouldn't logout from all devices!
+    try {
+        req.user.tokens = req.user.tokens.filter((token) => {
+            return token.token !== req.token
+        })
+        await req.user.save()
+        res.send()
+    } catch (e) {
+        res.status(500).send(e)
+    }
+})
+
+router.post('/users/logoutAll', auth.auth, async (req, res) => {
+    try {
+        req.user.tokens = []
+        await req.user.save()
+        res.send()
+    } catch (e) {
+        res.status(500).send(e)
+    }
+})
+
 router.get('/users/me', auth.auth, async (req, res) => {
 
     res.send(req.user)
@@ -66,18 +89,7 @@ router.get('/users/:id', async (req, res) => {
     } else {
         return res.status(400).send('Invalid objectID!')
     }
-    // if (_id.match(/^[0-9a-fA-F]{24}$/)) {
-    //     User_model.User.findById(_id).then((user) => {
-    //         if (!user) {
-    //             return res.status(404).send('User not found!')
-    //         }
-    //         res.send(user)
-    //     }).catch((e) => {
-    //         res.status(500).send(e)
-    //     })
-    // } else {
-    //     return res.status(400).send('Invalid objectID!')
-    // }
+
 })
 
 router.patch('/users/:id', async (req, res) => {
