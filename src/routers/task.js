@@ -20,16 +20,45 @@ router.post('/tasks', auth.auth, async (req, res) => {
     }
 
 })
-
+// GET /tasks?completed=true for filter
+// GET /tasks?limit=10&skip=10 for pagination
+// GET /tasks?sortBy=createdAt_asc for sorting
 router.get('/tasks', auth.auth, async (req, res) => {
-    //alternative option
-    // const user = await User.findById('64d538231e5677aec17a1f9b')
-    // await user.populate('tasks')
-    // console.log(user.tasks)
+
+    const match = {}
+    const sort = {}
+
+    if (req.query.sortBy) {
+        const parts = req.query.sortBy.split('_')
+        sort[parts[0]] = parts[1] === 'asc' ? 1 : -1
+    }
+
+    if (req.query.completed) {
+        match.Completed = req.query.completed === 'true'
+    }
 
     try {
-        const task = await task_model.task.find({ user_id: req.user._id })
-        res.send(task)
+        //alternative option
+        console.log(match)
+        await req.user.populate({ path: 'tasks', match, options: { limit: parseInt(req.query.limit), skip: parseInt(req.query.skip), sort } })
+
+        res.send(req.user.tasks)
+        //req.query.completed returns string value
+        //     if (completed == 'true') {
+        //         const task = await task_model.task.find({ user_id: req.user._id, Completed: true })
+        //         res.send(task)
+
+        //     } else if (completed == 'false') {
+        //         const task = await task_model.task.find({ user_id: req.user._id, Completed: false })
+        //         res.send(task)
+
+        //     } else {
+        //         const task = await task_model.task.find({ user_id: req.user._id })
+        //         res.send(task)
+
+        //     }
+
+
     } catch (e) {
         res.send(e)
     }
