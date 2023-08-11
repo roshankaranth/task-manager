@@ -3,6 +3,7 @@ const validator = require('validator')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const { task } = require('../models/tasks')
+
 const userSchema = new mongoose.Schema({
     name: { type: String, trim: true },
     age: {
@@ -43,6 +44,8 @@ const userSchema = new mongoose.Schema({
     },
     //subdocument!
     tokens: [{ token: { type: String, required: true } }]
+}, {
+    timestamps: true
 })
 // objects are stringified in res.send(). toJSON() is called whenever that object is stringified..
 userSchema.methods.toJSON = function () {

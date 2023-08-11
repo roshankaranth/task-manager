@@ -34,11 +34,6 @@ router.get('/tasks', auth.auth, async (req, res) => {
         res.send(e)
     }
 
-    // task_model.task.find({}).then((task) => {
-    //     res.send(task)
-    // }).catch((e) => {
-    //     res.send(e)
-    // })
 })
 
 router.get('/tasks/:id', auth.auth, async (req, res) => {
