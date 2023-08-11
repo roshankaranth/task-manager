@@ -2,7 +2,7 @@ const express = require('express')
 const User_model = require('../models/users')
 const bcrypt = require('bcryptjs')
 const auth = require('../middleware/auth')
-
+const { task } = require('../models/tasks')
 require('../db/mongoose')
 
 const router = new express.Router()
@@ -24,7 +24,7 @@ router.post('/users', async (req, res) => {
     try {
         await user.save()
         const token = await user.GenerateAuthToken()
-        res.status(201).send({ token, user })
+        res.status(201).send({ user, token })
     } catch (e) {
         res.status(400).send(e)
     }
@@ -71,28 +71,7 @@ router.get('/users/me', auth.auth, async (req, res) => {
     // })
 })
 
-router.get('/users/:id', async (req, res) => {
-    const _id = req.params.id
-
-
-    if (_id.match(/^[0-9a-fA-F]{24}$/)) {
-        try {
-            const user = await User_model.User.findById(_id)
-            if (!user) {
-                return res.status(404).send('User not found!')
-            }
-            res.send(user)
-        } catch (e) {
-            res.status(500).send(e)
-        }
-
-    } else {
-        return res.status(400).send('Invalid objectID!')
-    }
-
-})
-
-router.patch('/users/:id', async (req, res) => {
+router.patch('/users/me', auth.auth, async (req, res) => {
     const updates = Object.keys(req.body)
     // const allowedUpdates = ['name', 'email', 'age']
     // const flag = updates.forEach((prop) => {
@@ -104,10 +83,8 @@ router.patch('/users/:id', async (req, res) => {
 
 
     // if (!flag) { return res.status(400).send('Property not defined!') }
-
-    const _id = req.params.id
     try {
-        const user = await User_model.User.findById(_id)
+        const user = req.user
         updates.forEach((prop) => {
             user[prop] = req.body[prop]
         })
@@ -115,9 +92,6 @@ router.patch('/users/:id', async (req, res) => {
         await user.save()
         //Middleware is ignored in case of highlevel functions such as below, to avoid that we have done above!
         // const user = await User_model.User.findByIdAndUpdate(_id, req.body, { new: true, runValidators: true })
-        if (!user) {
-            return res.status(404).send('User does not exist!')
-        }
         res.send(user)
 
     } catch (e) {
@@ -125,13 +99,13 @@ router.patch('/users/:id', async (req, res) => {
     }
 })
 
-router.delete('/users/:id', async (req, res) => {
-    const _id = req.params.id
+router.delete('/users/me', auth.auth, async (req, res) => {
     try {
-        const del_user = await User_model.User.findByIdAndDelete(_id)
-        if (!del_user) { return res.status(404).send("User not found!") }
-        res.send(del_user)
+        await User_model.User.deleteOne(req.user)
+        await task.deleteMany({ user_id: req.user._id })
+        res.send(req.user)
     } catch (e) {
+        console.log(e)
         res.status(500).send(e)
     }
 })

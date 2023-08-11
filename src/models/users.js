@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 const validator = require('validator')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-
+const { task } = require('../models/tasks')
 const userSchema = new mongoose.Schema({
     name: { type: String, trim: true },
     age: {
@@ -44,6 +44,22 @@ const userSchema = new mongoose.Schema({
     //subdocument!
     tokens: [{ token: { type: String, required: true } }]
 })
+// objects are stringified in res.send(). toJSON() is called whenever that object is stringified..
+userSchema.methods.toJSON = function () {
+    const user = this
+    const userObject = user.toObject()
+
+    delete userObject.password
+    delete userObject.tokens
+
+    return userObject
+}
+//virtual property is a relationship between two models/entities and not actual data in a database
+userSchema.virtual('tasks', {
+    ref: 'task',
+    localField: '_id',
+    foreignField: 'user_id'
+})
 //static method accessible on models and method accessible on instances of model
 userSchema.methods.GenerateAuthToken = async function () {
     const user = this
@@ -75,6 +91,13 @@ userSchema.pre('save', async function (next) {
     if (this.isModified('password')) {
         this.password = await bcrypt.hash(this.password, 8)
     }
+    next()
+})
+//remove function is deprecated
+userSchema.pre('remove', async function (next) {
+    const user = this
+    task.deleteMany({ user_id })
+
     next()
 })
 
