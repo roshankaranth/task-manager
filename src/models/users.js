@@ -43,10 +43,14 @@ const userSchema = new mongoose.Schema({
         trim: true
     },
     //subdocument!
-    tokens: [{ token: { type: String, required: true } }]
-}, {
-    timestamps: true
-})
+    tokens: [{ token: { type: String, required: true } }],
+    avatar: {
+        type: Buffer
+    }
+},
+    {
+        timestamps: true
+    })
 // objects are stringified in res.send(). toJSON() is called whenever that object is stringified..
 userSchema.methods.toJSON = function () {
     const user = this
@@ -54,6 +58,7 @@ userSchema.methods.toJSON = function () {
 
     delete userObject.password
     delete userObject.tokens
+    delete userObject.avatar
 
     return userObject
 }

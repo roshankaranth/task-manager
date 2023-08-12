@@ -3,9 +3,25 @@ const User_model = require('../models/users')
 const bcrypt = require('bcryptjs')
 const auth = require('../middleware/auth')
 const { task } = require('../models/tasks')
+const multer = require('multer')
+const sharp = require('sharp')
 require('../db/mongoose')
 
 const router = new express.Router()
+const upload = multer({
+    limits: {
+        fileSize: 1000000 //1MB restriction
+    },
+    fileFilter(req, file, cb) {
+        const extension = file.originalname.split('.')[1]
+        if (extension === 'png' || extension === 'jpg' || extension === 'jpeg') {
+            cb(undefined, true)
+        } else {
+            cb(new Error('File must be an image!'))
+        }
+
+    }
+})
 
 router.post('/users/login', async (req, res, next) => {
     try {
@@ -60,6 +76,37 @@ router.post('/users/logoutAll', auth.auth, async (req, res) => {
     }
 })
 
+router.post('/users/me/avatar', auth.auth, upload.single('avatar'), async (req, res) => {
+
+    req.user.avatar = await sharp(req.file.buffer).resize({ width: 250, height: 250 }).png().toBuffer()
+    await req.user.save()
+    res.send()
+    //a different request because we are taking in form data and not json data
+    //validation by restricting file type and size
+}, (error, req, res, next) => {
+    res.status(400).send({ error: error.message })
+})
+
+router.delete('/users/me/avatar', auth.auth, async (req, res) => {
+    req.user.avatar = undefined
+    await req.user.save()
+    res.send()
+})
+
+router.get('/users/:id/avatar', async (req, res) => {
+    try {
+        const user = await User_model.User.findById(req.params.id)
+        if (!user || !user.avatar) {
+            throw new Error()
+        }
+        res.set('Content-Type', 'image/png')
+        res.send(user.avatar)
+    } catch (e) {
+        res.status(404).send()
+    }
+
+})
+
 router.get('/users/me', auth.auth, async (req, res) => {
 
     res.send(req.user)
@@ -111,3 +158,5 @@ router.delete('/users/me', auth.auth, async (req, res) => {
 })
 
 module.exports = { router }
+
+//regular expression
